@@ -88,27 +88,27 @@ class HFTModel:
         sys.stdout.flush()
 
         if is_position_closed and is_sell_signal:
-            print "=================================="
-            print "OPEN SHORT POSIITON: SELL A BUY B"
-            print "=================================="
+            print("==================================")
+            print("OPEN SHORT POSIITON: SELL A BUY B")
+            print("==================================")
             self.__place_spread_order(-self.trade_qty)
 
         elif is_position_closed and is_buy_signal:
-            print "=================================="
-            print "OPEN LONG POSIITON: BUY A SELL B"
-            print "=================================="
+            print("==================================")
+            print("OPEN LONG POSIITON: BUY A SELL B")
+            print("==================================")
             self.__place_spread_order(self.trade_qty)
 
         elif is_short and is_buy_signal:
-            print "=================================="
-            print "CLOSE SHORT POSITION: BUY A SELL B"
-            print "=================================="
+            print("==================================")
+            print("CLOSE SHORT POSITION: BUY A SELL B")
+            print("==================================")
             self.__place_spread_order(self.trade_qty)
 
         elif is_long and is_sell_signal:
-            print "=================================="
-            print "CLOSE LONG POSITION: SELL A BUY B"
-            print "=================================="
+            print("==================================")
+            print("CLOSE LONG POSITION: SELL A BUY B")
+            print("==================================")
             self.__place_spread_order(-self.trade_qty)
 
     def __recalculate_strategy_parameters_at_interval(self):
@@ -120,7 +120,7 @@ class HFTModel:
         if self.strategy_params.is_evaluation_time_elapsed():
             self.__calculate_strategy_params()
             self.strategy_params.set_new_evaluation_time()
-            print '[%s] === Beta re-evaluated ===' % dt.datetime.now()
+            print('[%s] === Beta re-evaluated ===' % dt.datetime.now())
 
     def __calculate_strategy_params(self):
         """
@@ -171,7 +171,7 @@ class HFTModel:
     def __request_streaming_data(self, ib_conn):
         # Stream market data
         for index, (key, stock_data) in enumerate(
-                self.stocks_data.iteritems()):
+                self.stocks_data.items()):
             ib_conn.reqMktData(index,
                                stock_data.contract,
                                datatype.GENERIC_TICKS_NONE,
@@ -185,7 +185,7 @@ class HFTModel:
         self.lock.acquire()
         try:
             for index, (key, stock_data) in enumerate(
-                    self.stocks_data.iteritems()):
+                    self.stocks_data.items()):
                 stock_data.is_storing_data = True
                 ib_conn.reqHistoricalData(
                     index,
@@ -250,7 +250,7 @@ class HFTModel:
         return is_overbought, is_oversold
 
     def __on_portfolio_update(self, msg):
-        for key, stock_data in self.stocks_data.iteritems():
+        for key, stock_data in self.stocks_data.items():
             if stock_data.contract.m_symbol == msg.contract.m_symbol:
                 stock_data.update_position(msg.position,
                                            msg.marketPrice,
@@ -263,7 +263,7 @@ class HFTModel:
 
     def __calculate_pnls(self):
         upnl, rpnl = 0, 0
-        for key, stock_data in self.stocks_data.iteritems():
+        for key, stock_data in self.stocks_data.items():
             upnl += stock_data.unrealized_pnl
             rpnl += stock_data.realized_pnl
         return upnl, rpnl
@@ -282,10 +282,10 @@ class HFTModel:
             self.order_id = msg.orderId
 
         else:
-            print msg
+            print(msg)
 
     def __on_historical_data(self, msg):
-        print msg
+        print(msg)
 
         ticker_index = msg.reqId
 
@@ -341,7 +341,7 @@ class HFTModel:
     @staticmethod
     def __print_elapsed_time(start_time):
         elapsed_time = time.time() - start_time
-        print "Completed in %.3f seconds." % elapsed_time
+        print("Completed in %.3f seconds." % elapsed_time)
 
     def __cancel_market_data_request(self):
         for i, symbol in enumerate(self.symbols):
@@ -349,7 +349,7 @@ class HFTModel:
             time.sleep(1)
 
     def start(self, symbols, trade_qty):
-        print "HFT model started."
+        print("HFT model started.")
 
         self.trade_qty = trade_qty
 
@@ -357,31 +357,31 @@ class HFTModel:
         self.__init_stocks_data(symbols)
         self.__request_streaming_data(self.conn)
 
-        print "Bootstrapping the model..."
+        print("Bootstrapping the model...")
         start_time = time.time()
         self.__request_historical_data(self.conn)
         self.__wait_for_download_completion()
         self.strategy_params.set_bootstrap_completed()
         self.__print_elapsed_time(start_time)
 
-        print "Calculating strategy parameters..."
+        print("Calculating strategy parameters...")
         start_time = time.time()
         self.__calculate_strategy_params()
         self.__print_elapsed_time(start_time)
 
-        print "Trading started."
+        print("Trading started.")
         try:
             self.__update_charts()
             while True:
                 time.sleep(1)
 
-        except Exception, e:
-            print "Exception:", e
-            print "Cancelling...",
+        except Exception as e:
+            print("Exception:", e)
+            print("Cancelling...",)
             self.__cancel_market_data_request()
 
-            print "Disconnecting..."
+            print("Disconnecting...")
             self.conn.disconnect()
             time.sleep(1)
 
-            print "Disconnected."
+            print("Disconnected.")
